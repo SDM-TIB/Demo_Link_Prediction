@@ -120,3 +120,11 @@ def compute_metrics(predicted_heads, cut_index, model):
     f_measure = get_f_measure(precision, recall)
     return pd.DataFrame(columns=['precision', 'recall', 'f_measure'],
                         data=[[precision, recall, f_measure]], index=[model])
+
+
+def plot_score_value(score_values, title):
+    plt.plot(score_values)
+    plt.xlabel("Entities")
+    plt.ylabel("Score")
+    plt.title(title)
+    plt.show()
