@@ -24,7 +24,7 @@ def load_dataset(name):
     return tf_data, triple
 
 
-def create_model(tf_training, tf_testing, embedding, n_epoch, path):
+def create_model(tf_training, tf_testing, embedding, n_epoch, training_loops, path):
     results = pipeline(
         training=tf_training,
         testing=tf_testing,
@@ -37,6 +37,7 @@ def create_model(tf_training, tf_testing, embedding, n_epoch, path):
         # Runtime configuration
         random_seed=1235,
         device='cpu',
+        training_loop=training_loops,
     )
     model = results.model
     results.save_to_directory(path + embedding)
@@ -113,17 +114,9 @@ def reset_index(predicted_heads):
     return predicted_heads
 
 
-def compute_metrics(predicted_heads, cut_index):
+def compute_metrics(predicted_heads, cut_index, model):
     precision, tp = get_precision(predicted_heads, cut_index)
     recall = get_recall(predicted_heads, tp)
     f_measure = get_f_measure(precision, recall)
     return pd.DataFrame(columns=['precision', 'recall', 'f_measure'],
-                        data=[[precision, recall, f_measure]], index=['MuRe'])
-
-
-def plot_score_value(score_values, predicate):
-    plt.plot(score_values)
-    plt.xlabel("Entities")
-    plt.ylabel("Score")
-    plt.title(predicate)
-    plt.show()
+                        data=[[precision, recall, f_measure]], index=[model])
