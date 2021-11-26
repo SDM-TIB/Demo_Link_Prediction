@@ -132,6 +132,7 @@ def plot_score_value(score_values, title):
     plt.ylabel("Score")
     plt.title(title)
     plt.show()
+    plt.close()
 
 
 def get_learned_embeddings(model):
