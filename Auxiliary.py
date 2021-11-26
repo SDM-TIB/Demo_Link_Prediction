@@ -13,6 +13,8 @@ import matplotlib.colors as colors
 from sklearn.cluster import KMeans
 from yellowbrick.cluster import KElbowVisualizer
 from sklearn.decomposition import PCA
+from rdflib import Graph
+from rdflib.plugins.sparql.processor import SPARQLResult
 
 
 def load_dataset(name):
@@ -160,7 +162,7 @@ def elbow_KMeans(matrix, k_min, k_max):
     visualizer.fit(matrix)
     num_cls = visualizer.elbow_value_
     visualizer.show()
-    #kmeans = KMeans(n_clusters=num_cls, random_state=0).fit(cosine_matrix)
+    # kmeans = KMeans(n_clusters=num_cls, random_state=0).fit(cosine_matrix)
     return num_cls
 
 
@@ -191,3 +193,40 @@ def plot_cluster(num_cls, new_df):
     # title and labels
     plt.title('Clusters of Entities predicted', loc='left', fontsize=22)
     plt.show()
+
+
+def load_graph(file_name):
+    g1 = Graph()
+    g1.parse(file_name, format="ttl")
+    return g1
+
+
+def sparql_results_to_df(results: SPARQLResult) -> pd.DataFrame:
+    """
+    Export results from an rdflib SPARQL query into a `pandas.DataFrame`,
+    using Python types. See https://github.com/RDFLib/rdflib/issues/1179.
+    """
+    return pd.DataFrame(
+        data=([None if x is None else x.toPython() for x in row] for row in results),
+        columns=[str(x) for x in results.vars],
+    )
+
+
+def get_triple(graph, predicted_heads, entity_type):
+    list_entity = list(predicted_heads.head_label)
+    list_entity = ', '.join(list_entity)
+    query = """    
+    select distinct ?s
+    where {
+        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> """ + entity_type + """
+        FILTER (?s in (""" + str(list_entity) + """))
+        }
+        """
+    results = graph.query(query)
+    df_cls = sparql_results_to_df(results)
+    df_cls['s'] = '<' + df_cls['s'].astype(str) + '>'
+    entity = list(df_cls.s)
+
+    predicted_heads = predicted_heads.loc[predicted_heads.head_label.isin(entity)]
+    predicted_heads = reset_index(predicted_heads)
+    return predicted_heads, entity
