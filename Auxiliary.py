@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from sklearn.cluster import KMeans
 from yellowbrick.cluster import KElbowVisualizer
+from sklearn.decomposition import PCA
 
 
 def load_dataset(name):
