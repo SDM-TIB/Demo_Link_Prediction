@@ -10,6 +10,9 @@ import statistics
 from scipy.ndimage import gaussian_filter1d
 import math
 
+from typing import List
+import pykeen.nn
+
 
 def load_dataset(name):
     triple_data = open(name).read().strip()
@@ -128,3 +131,15 @@ def plot_score_value(score_values, title):
     plt.ylabel("Score")
     plt.title(title)
     plt.show()
+
+
+def get_learned_embeddings(model):
+    entity_representation_modules: List['pykeen.nn.RepresentationModule'] = model.entity_representations
+    relation_representation_modules: List['pykeen.nn.RepresentationModule'] = model.relation_representations
+
+    entity_embeddings: pykeen.nn.Embedding = entity_representation_modules[0]
+    relation_embeddings: pykeen.nn.Embedding = relation_representation_modules[0]
+
+    entity_embedding_tensor: torch.FloatTensor = entity_embeddings()
+    relation_embedding_tensor: torch.FloatTensor = relation_embeddings()
+    return entity_embedding_tensor, relation_embedding_tensor
