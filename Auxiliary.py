@@ -1,17 +1,17 @@
-import matplotlib.pyplot as plt
-
 from pykeen.triples import TriplesFactory
 from pykeen.pipeline import pipeline
 from pykeen.models import predict
+import pykeen.nn
+from typing import List
 import pandas as pd
 import numpy as np
-
 import statistics
 from scipy.ndimage import gaussian_filter1d
 import math
-
-from typing import List
-import pykeen.nn
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+from sklearn.cluster import KMeans
+from yellowbrick.cluster import KElbowVisualizer
 
 
 def load_dataset(name):
@@ -143,3 +143,49 @@ def get_learned_embeddings(model):
     entity_embedding_tensor: torch.FloatTensor = entity_embeddings()
     relation_embedding_tensor: torch.FloatTensor = relation_embeddings()
     return entity_embedding_tensor, relation_embedding_tensor
+
+
+def create_dataframe_predicted_entities(entity_embedding_tensor, predicted_heads):
+    df = pd.DataFrame(entity_embedding_tensor.detach().numpy())
+    df['target'] = list(training.entity_to_id)
+    new_df = df.loc[df.target.isin(list(predicted_heads.head_label))]
+    return new_df.iloc[:, :-1]
+
+
+def elbow_KMeans(matrix, k_min, k_max):
+    model = KMeans()
+    visualizer = KElbowVisualizer(model, k=(k_min, k_max))
+    visualizer.fit(matrix)
+    num_cls = visualizer.elbow_value_
+    visualizer.show()
+    #kmeans = KMeans(n_clusters=num_cls, random_state=0).fit(cosine_matrix)
+    return num_cls
+
+
+def plot_cluster(num_cls, new_df):
+    X = new_df.copy()
+    kmeans = KMeans(n_clusters=num_cls, random_state=0)
+    new_df['cluster'] = kmeans.fit_predict(new_df)
+    # define and map colors
+    col = list(colors.cnames.values())
+    col = col[:num_cls]
+    index = list(range(num_cls))
+    color_dictionary = dict(zip(index, col))
+    new_df['c'] = new_df.cluster.map(color_dictionary)
+    #####PLOT#####
+    from matplotlib.lines import Line2D
+    fig, ax = plt.subplots(1, figsize=(8, 8))
+    # plot data
+    pca = PCA(n_components=2).fit(X)
+    pca_c = pca.transform(X)
+    plt.scatter(pca_c[:, 0], pca_c[:, 1], c=new_df.c, alpha=0.6, s=100)
+
+    # create a list of legend elemntes
+    ## markers / records
+    legend_elements = [Line2D([0], [0], marker='o', color='w', label='Cluster {}'.format(i + 1),
+                              markerfacecolor=mcolor, markersize=5) for i, mcolor in enumerate(col)]
+    # plot legend
+    plt.legend(handles=legend_elements, loc='upper right')
+    # title and labels
+    plt.title('Clusters of Entities predicted', loc='left', fontsize=22)
+    plt.show()
