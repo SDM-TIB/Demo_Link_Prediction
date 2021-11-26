@@ -145,7 +145,7 @@ def get_learned_embeddings(model):
     return entity_embedding_tensor, relation_embedding_tensor
 
 
-def create_dataframe_predicted_entities(entity_embedding_tensor, predicted_heads):
+def create_dataframe_predicted_entities(entity_embedding_tensor, predicted_heads, training):
     df = pd.DataFrame(entity_embedding_tensor.detach().numpy())
     df['target'] = list(training.entity_to_id)
     new_df = df.loc[df.target.isin(list(predicted_heads.head_label))]
