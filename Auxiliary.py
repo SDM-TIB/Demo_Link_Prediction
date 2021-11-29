@@ -42,7 +42,7 @@ def create_model(tf_training, tf_testing, embedding, n_epoch, training_loops, pa
         ),
         # Runtime configuration
         random_seed=1235,
-        device='cpu',
+        device='gpu',
         training_loop=training_loops,
     )
     model = results.model
